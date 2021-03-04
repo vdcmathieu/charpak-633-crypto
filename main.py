@@ -219,13 +219,23 @@ class Shift:
 class Vigenere:
 
     def __init__(self, message, encrypted=True):
+        """
+        Init
+        :param message:
+        :param encrypted:
+        """
         self.message = message
         self.encrypted = encrypted
-        self.size_repetition = 5
+        self.size_repetition = 4
         self.key = self.get_key()
         self.clear_message = self.get_clear()
 
     def get_repetition(self, indice=0):
+        """
+        Get repetition of size x in a text
+        :param indice:
+        :return first repetition found based on given indice:
+        """
         for i in range(indice, len(self.message) - self.size_repetition):
             for j in range(i + self.size_repetition, len(self.message) - self.size_repetition):
                 if self.message[i:i + self.size_repetition] == self.message[j:j + self.size_repetition]:
@@ -239,24 +249,61 @@ class Vigenere:
         return False
 
     def get_key(self):
+        """
+        Get vigenere key by getting the smallest distance between two chars repetition
+        :return Vigenere key:
+        """
         message_size = len(self.message)
-        repetition_distance, required_distance = message_size, message_size // 400
+        repetition_distance, required_distance = message_size, message_size // 200
         indice = 0
 
         while repetition_distance > required_distance:
             repetition = self.get_repetition(indice)
-            print(repetition)
-            repetition_distance = pgcd(repetition['distance'], repetition_distance)
+            if indice == 0:
+                repetition_distance = repetition['distance']
+            else:
+                repetition_distance = pgcd(repetition['distance'], repetition_distance)
             indice = repetition['indice_i'] + 1
+            if indice > len(self.message):
+                return False
 
         vi_key = repetition_distance
 
         return vi_key
 
     def decrypt(self):
+        """
+        Decrypt Vigenere by using the multiple shift and the key given by get_key
+        :return unencrypted message:
+        """
         return Shift(self.message, nb_m_shift=self.key, multiple_shift=True).clear_message
 
     def get_clear(self):
+        """
+        Check the message condition and give the correct protocol to obtain clear message
+        :return clear message:
+        """
+        if self.encrypted:
+            message = self.decrypt()
+        else:
+            message = self.message
+        return message
+
+
+class Enigma:
+
+    def __init__(self, message, encrypted=True):
+        self.message = message
+        self.encrypted = encrypted
+
+    def decrypt(self):
+        return self.message
+
+    def get_clear(self):
+        """
+        Check the message condition and give the correct protocol to obtain clear message
+        :return clear message:
+        """
         if self.encrypted:
             message = self.decrypt()
         else:
@@ -269,8 +316,10 @@ Main
 """
 if __name__ == '__main__':
     messages = import_messages()  # get messages
-    message1 = Scytale(messages["message1"], 3).clear_message
-    message2 = Shift(messages['message2']).clear_message
-    message3 = Shift(messages['message3']).clear_message
-    message4 = Shift(messages['message4'], nb_m_shift=2, multiple_shift=True).clear_message
+    message1 = Scytale(messages["message1"], 3)
+    message2 = Shift(messages['message2'])
+    message3 = Shift(messages['message3'])
+    message4 = Shift(messages['message4'], nb_m_shift=2, multiple_shift=True)
     message5 = Vigenere(messages['message5'])
+    message6 = Vigenere(messages["message6"])
+    message7 = Vigenere(messages['message7'])
