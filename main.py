@@ -11,6 +11,8 @@ __status__ = "development"
 Library import
 """
 
+import rotors as rt
+
 """
 Basic functions
 """
@@ -28,7 +30,7 @@ def import_messages() -> dict:
     return msg
 
 
-def frequency(txt) -> dict:
+def frequency(txt: str) -> dict:
     """
     Get the frequency of each char in a text
     :param txt:
@@ -58,7 +60,7 @@ Class
 
 class Scytale:
 
-    def __init__(self, message, nb_columns, encrypted=True):
+    def __init__(self, message: str, nb_columns: int, encrypted: bool = True):
         """
         Init
         :param message:
@@ -71,7 +73,7 @@ class Scytale:
         self.table = self.table_filling()
         self.clear_message = self.get_clear()
 
-    def separate_message(self):
+    def separate_message(self) -> str:
         """
         Serapate the original message into chunck to complete column
         :return array with message's chunks:
@@ -84,7 +86,7 @@ class Scytale:
         msgs = [self.message[i:i + chunk_size] for i in range(0, chunks, chunk_size)]
         return msgs
 
-    def table_filling(self):
+    def table_filling(self) -> list:
         """
         Fill the table with message's chunks
         :return table fields according to the number of column provided:
@@ -96,7 +98,7 @@ class Scytale:
                 table[column].append(letter)
         return table
 
-    def table_reading(self):
+    def table_reading(self) -> str:
         """
         Read table to decrypt message
         :return unecrypted message:
@@ -112,14 +114,14 @@ class Scytale:
         unencrypted_message = ''.join(unencrypted_message_table)
         return unencrypted_message
 
-    def decrypt(self):
+    def decrypt(self) -> str:
         """
         Decrypt the message
         :return unecrypted message:
         """
         return self.table_reading()
 
-    def get_clear(self):
+    def get_clear(self) -> str:
         """
         Check if message is encrypted if so get the clear message
         :return clear message:
@@ -133,7 +135,8 @@ class Scytale:
 
 class Shift:
 
-    def __init__(self, message, nb_shift=0, nb_m_shift=1, auto_shift=True, multiple_shift=False, encrypted=True):
+    def __init__(self, message: str, nb_shift: int = 0, nb_m_shift: int = 1, auto_shift: bool = True,
+                 multiple_shift: bool = False, encrypted: bool = True):
         """
         Init
         :param message:
@@ -151,7 +154,7 @@ class Shift:
         self.nb_m_shift = nb_m_shift
         self.clear_message = self.get_clear()
 
-    def decrypt(self, message, shift):
+    def decrypt(self, message: str, shift: int) -> str:
         """
         Decrypt a shift encrypted message
         :param message:
@@ -161,7 +164,7 @@ class Shift:
         unencrypted_message = ''.join([chr(ord(letter) + shift) for letter in message])
         return unencrypted_message
 
-    def get_shift(self, message):
+    def get_shift(self, message: str) -> int:
         """
         Get the shift of a message
         :param message:
@@ -172,7 +175,7 @@ class Shift:
         shift = ord(" ") - ord(letter)
         return shift
 
-    def auto_decrypt(self, message):
+    def auto_decrypt(self, message: str) -> str:
         """
         Auto decrypt a shift encoded message
         :param message:
@@ -181,7 +184,7 @@ class Shift:
         unencrypted_message = self.decrypt(message, self.get_shift(message))
         return unencrypted_message
 
-    def m_shift(self):
+    def m_shift(self) -> str:
         """
         Decrypt a message with multiple shift
         :return unencrypted message:
@@ -200,7 +203,7 @@ class Shift:
                     nothing_happen = "well that's true"
         return ''.join(unecrypted_message)
 
-    def get_clear(self):
+    def get_clear(self) -> str:
         """
         Check the message condition and give the correct protocol to obtain clear message
         :return clear message:
@@ -218,7 +221,7 @@ class Shift:
 
 class Vigenere:
 
-    def __init__(self, message, encrypted=True):
+    def __init__(self, message: str, encrypted: bool = True):
         """
         Init
         :param message:
@@ -230,7 +233,7 @@ class Vigenere:
         self.key = self.get_key()
         self.clear_message = self.get_clear()
 
-    def get_repetition(self, indice=0):
+    def get_repetition(self, indice: int = 0) -> dict:
         """
         Get repetition of size x in a text
         :param indice:
@@ -248,7 +251,7 @@ class Vigenere:
                     }
         return False
 
-    def get_key(self):
+    def get_key(self) -> int:
         """
         Get vigenere key by getting the smallest distance between two chars repetition
         :return Vigenere key:
@@ -271,14 +274,14 @@ class Vigenere:
 
         return vi_key
 
-    def decrypt(self):
+    def decrypt(self) -> str:
         """
         Decrypt Vigenere by using the multiple shift and the key given by get_key
         :return unencrypted message:
         """
         return Shift(self.message, nb_m_shift=self.key, multiple_shift=True).clear_message
 
-    def get_clear(self):
+    def get_clear(self) -> str:
         """
         Check the message condition and give the correct protocol to obtain clear message
         :return clear message:
@@ -292,14 +295,16 @@ class Vigenere:
 
 class Enigma:
 
-    def __init__(self, message, encrypted=True):
+    def __init__(self, message: str, encrypted: bool = True):
         self.message = message
         self.encrypted = encrypted
+        self.rotors = rt.get_rotors()
+        self.clear_message = self.get_clear()
 
-    def decrypt(self):
+    def decrypt(self) -> str:
         return self.message
 
-    def get_clear(self):
+    def get_clear(self) -> str:
         """
         Check the message condition and give the correct protocol to obtain clear message
         :return clear message:
