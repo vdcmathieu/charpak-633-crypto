@@ -3,7 +3,7 @@ Give the rotors variables for enigma
 """
 
 
-def get_rotors() -> list:
+def get_rotors(rotors_list: list = [1, 2, 3]) -> list:
     """
     Get rotors given for enigma
     :return rotors:
@@ -98,7 +98,7 @@ def get_rotors() -> list:
          229, 75, 55, 154, 82, 150, 160, 198, 255, 1, 95, 118, 206, 120, 242, 116, 200, 110, 103, 22, 111, 178, 171, 5,
          245, 139, 18, 253, 247, 31, 108, 208, 127, 8, 144, 239, 73, 219]
     ]
-    return rotors
+    return [rotors[i] for i in rotors_list]
 
 
 if __name__ == '__main__':

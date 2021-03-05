@@ -73,7 +73,7 @@ class Scytale:
         self.table = self.table_filling()
         self.clear_message = self.get_clear()
 
-    def separate_message(self) -> str:
+    def separate_message(self) -> list:
         """
         Serapate the original message into chunck to complete column
         :return array with message's chunks:
@@ -249,7 +249,6 @@ class Vigenere:
                         "indice_j": j,
                         "distance": j - i
                     }
-        return False
 
     def get_key(self) -> int:
         """
@@ -295,11 +294,46 @@ class Vigenere:
 
 class Enigma:
 
-    def __init__(self, message: str, encrypted: bool = True):
+    def __init__(self, message: str, rotors: list = [1, 2, 3], encrypted: bool = True):
         self.message = message
         self.encrypted = encrypted
-        self.rotors = rt.get_rotors()
+        self.rotation, self.inverse_rotation = [0, 0, 0], [0, 0, 0]
+        self.rotors, self.rotors_inverse = rt.get_rotors(rotors), self.get_inverse()
+        self.initial_rotors, self.initial_rotors_inv = self.rotors, self.rotors_inverse
         self.clear_message = self.get_clear()
+
+    def get_inverse(self) -> list:
+        """
+        Get rotors inverse to decrypt
+        :return rotors inverse to decrypt:
+        """
+        inverse_dic = [{} for i in range(len(self.rotors))]
+        inverse = [[] for i in range(len(self.rotors))]
+        for idx_rot, rotor in enumerate(self.rotors):
+            for index, element in enumerate(rotor):
+                inverse_dic[idx_rot][element] = index
+            inverse[idx_rot] = [inverse_dic[idx_rot][key] if key in inverse_dic[idx_rot].keys() else 0 for key in range(10)]
+        return inverse
+
+    def rotate_rotors(self, inverse: bool = False):
+        if not inverse:
+            self.rotors[0] = [self.rotors[0][-1]] + self.rotors[0][:-1]
+            self.rotation[0] += 1
+            if self.rotation[0] == 256:
+                self.rotors[1] = [self.rotors[1][-1]] + self.rotors[1][:-1]
+                self.rotation[1] += 1
+                if self.rotation[1] == 256:
+                    self.rotors[2] = [self.rotors[2][-1]] + self.rotors[2][:-1]
+                    self.rotation[2] += 1
+        else:
+            self.rotors_inverse[0] = self.rotors_inverse[0][1:] + [self.rotors_inverse[0][0]]
+            self.inverse_rotation[0] += 1
+            if self.inverse_rotation[0] == 256:
+                self.rotors_inverse[1] = self.rotors_inverse[1][1:] + [self.rotors_inverse[1][0]]
+                self.inverse_rotation[1] += 1
+                if self.inverse_rotation[1] == 256:
+                    self.rotors_inverse[2] = self.rotors_inverse[2][1:] + [self.rotors_inverse[2][0]]
+                    self.inverse_rotation[2] += 1
 
     def decrypt(self) -> str:
         return self.message
