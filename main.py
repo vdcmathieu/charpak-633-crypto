@@ -53,6 +53,16 @@ def pgcd(a: int, b: int) -> int:
         return pgcd(b, r)
 
 
+def rotate(array: list, n: int) -> list:
+    """
+    Rotate a list n times
+    :param array:
+    :param n:
+    :return rotated list:
+    """
+    return array[-n:] + array[:-n]
+
+
 """
 Class
 """
@@ -294,12 +304,23 @@ class Vigenere:
 
 class Enigma:
 
-    def __init__(self, message: str, rotors: list = [1, 2, 3], encrypted: bool = True):
+    def __init__(self, message: str, ch_rotors: list = None, init_config: list = None, encrypted: bool = True):
+        """
+        Init
+        :param message:
+        :param ch_rotors:
+        :param init_config:
+        :param encrypted:
+        """
+        if ch_rotors is None:
+            ch_rotors = [0, 1, 2]
+        if init_config is None:
+            init_config = [0, 0, 0]
         self.message = message
         self.encrypted = encrypted
         self.rotation, self.inverse_rotation = [0, 0, 0], [0, 0, 0]
-        self.rotors, self.rotors_inverse = rt.get_rotors(rotors), self.get_inverse()
-        self.initial_rotors, self.initial_rotors_inv = self.rotors, self.rotors_inverse
+        self.rotors = self.set_rotors(ch_rotors, init_config)
+        self.initial_rotors = self.rotors
         self.clear_message = self.get_clear()
 
     def get_inverse(self) -> list:
@@ -307,36 +328,54 @@ class Enigma:
         Get rotors inverse to decrypt
         :return rotors inverse to decrypt:
         """
-        inverse_dic = [{} for i in range(len(self.rotors))]
-        inverse = [[] for i in range(len(self.rotors))]
-        for idx_rot, rotor in enumerate(self.rotors):
-            for index, element in enumerate(rotor):
-                inverse_dic[idx_rot][element] = index
-            inverse[idx_rot] = [inverse_dic[idx_rot][key] if key in inverse_dic[idx_rot].keys() else 0 for key in range(10)]
-        return inverse
+        return [rotor[::-1] for rotor in self.rotors]
 
     def rotate_rotors(self, inverse: bool = False):
+        """
+        Rotate rotors
+        :param inverse:
+        :return rotate rotors or inverse rotors:
+        """
         if not inverse:
-            self.rotors[0] = [self.rotors[0][-1]] + self.rotors[0][:-1]
+            self.rotors[0] = rotate(self.rotors[0], 1)
             self.rotation[0] += 1
-            if self.rotation[0] == 256:
-                self.rotors[1] = [self.rotors[1][-1]] + self.rotors[1][:-1]
+            if self.rotation[0] % 256 == 0:
+                self.rotors[1] = rotate(self.rotors[1], 1)
                 self.rotation[1] += 1
-                if self.rotation[1] == 256:
-                    self.rotors[2] = [self.rotors[2][-1]] + self.rotors[2][:-1]
+                if self.rotation[1] % 256 == 0:
+                    self.rotors[2] = rotate(self.rotors[2], 1)
                     self.rotation[2] += 1
         else:
-            self.rotors_inverse[0] = self.rotors_inverse[0][1:] + [self.rotors_inverse[0][0]]
+            self.rotors[0] = rotate(self.rotors[0], -1)
             self.inverse_rotation[0] += 1
-            if self.inverse_rotation[0] == 256:
-                self.rotors_inverse[1] = self.rotors_inverse[1][1:] + [self.rotors_inverse[1][0]]
+            if self.inverse_rotation[0] % 256 == 0:
+                self.rotors[1] = rotate(self.rotors[1], -1)
                 self.inverse_rotation[1] += 1
-                if self.inverse_rotation[1] == 256:
-                    self.rotors_inverse[2] = self.rotors_inverse[2][1:] + [self.rotors_inverse[2][0]]
+                if self.inverse_rotation[1] % 256 == 0:
+                    self.rotors[2] = rotate(self.rotors[2], -1)
                     self.inverse_rotation[2] += 1
 
+    def set_rotors(self, choosen_rotors, init_config) -> list:
+        """
+        Set rotors based on provided initial config
+        :return set rotors:
+        """
+        return [rotate(li, init_config[index]) for index, li in enumerate(rt.get_rotors(choosen_rotors))]
+
     def decrypt(self) -> str:
-        return self.message
+        unencrypted_message = ""
+        for letter in self.message:
+            unencrypted_message += chr(self.rotors[0].index(self.rotors[1].index(self.rotors[2].index(ord(letter)))))
+            self.rotate_rotors()
+        return unencrypted_message
+
+    def crypt(self) -> list:
+        encrypted_message = []
+        to_encrypt = self.message.replace(" ", "")
+        for letter in to_encrypt:
+            encrypted_message += chr(self.rotors[2][self.rotors[1][self.rotors[0][ord(letter)]]])
+            self.rotate_rotors()
+        return encrypted_message
 
     def get_clear(self) -> str:
         """
@@ -344,21 +383,26 @@ class Enigma:
         :return clear message:
         """
         if self.encrypted:
-            message = self.decrypt()
+            return self.decrypt()
         else:
-            message = self.message
-        return message
+            initial_message = self.message
+            self.message = self.crypt()
+            return initial_message
 
 
 """
 Main
 """
 if __name__ == '__main__':
-    messages = import_messages()  # get messages
-    message1 = Scytale(messages["message1"], 3)
-    message2 = Shift(messages['message2'])
-    message3 = Shift(messages['message3'])
-    message4 = Shift(messages['message4'], nb_m_shift=2, multiple_shift=True)
-    message5 = Vigenere(messages['message5'])
-    message6 = Vigenere(messages["message6"])
-    message7 = Vigenere(messages['message7'])
+    # messages = import_messages()  # get messages
+    # message1 = Scytale(messages["message1"], 3)
+    # message2 = Shift(messages['message2'])
+    # message3 = Shift(messages['message3'])
+    # message4 = Shift(messages['message4'], nb_m_shift=2, multiple_shift=True)
+    # message5 = Vigenere(messages['message5'])
+    # message6 = Vigenere(messages["message6"])
+    # message7 = Vigenere(messages['message7'])
+    with open('test.txt', 'r', encoding="utf8") as file:
+        message = file.read()
+    enigma = Enigma(message, ch_rotors=[8, 9, 10], init_config=[0, 0, 0], encrypted=False)
+    print(enigma.message)
