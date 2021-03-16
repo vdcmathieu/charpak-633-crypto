@@ -53,7 +53,7 @@ def pgcd(a: int, b: int) -> int:
         return pgcd(b, r)
 
 
-def rotate(array: list, n: int) -> list:
+def rotate(array: list, n: int = 1) -> list:
     """
     Rotate a list n times
     :param array:
@@ -304,10 +304,10 @@ class Vigenere:
 
 class Enigma:
 
-    def __init__(self, message: str, ch_rotors: list = None, init_config: list = None, encrypted: bool = True):
+    def __init__(self, txt: str, ch_rotors: list = None, init_config: list = None, encrypted: bool = True):
         """
         Init
-        :param message:
+        :param txt:
         :param ch_rotors:
         :param init_config:
         :param encrypted:
@@ -316,12 +316,13 @@ class Enigma:
             ch_rotors = [0, 1, 2]
         if init_config is None:
             init_config = [0, 0, 0]
-        self.message = message
+        self.message = txt
         self.encrypted = encrypted
         self.rotation, self.inverse_rotation = [0, 0, 0], [0, 0, 0]
         self.rotors = self.set_rotors(ch_rotors, init_config)
         self.initial_rotors = self.rotors
         self.clear_message = self.get_clear()
+        self.encryption_dic = {"": ""}
 
     def get_inverse(self) -> list:
         """
@@ -337,13 +338,13 @@ class Enigma:
         :return rotate rotors or inverse rotors:
         """
         if not inverse:
-            self.rotors[0] = rotate(self.rotors[0], 1)
+            self.rotors[0] = rotate(self.rotors[0])
             self.rotation[0] += 1
             if self.rotation[0] % 256 == 0:
-                self.rotors[1] = rotate(self.rotors[1], 1)
+                self.rotors[1] = rotate(self.rotors[1])
                 self.rotation[1] += 1
                 if self.rotation[1] % 256 == 0:
-                    self.rotors[2] = rotate(self.rotors[2], 1)
+                    self.rotors[2] = rotate(self.rotors[2])
                     self.rotation[2] += 1
         else:
             self.rotors[0] = rotate(self.rotors[0], -1)
@@ -355,7 +356,8 @@ class Enigma:
                     self.rotors[2] = rotate(self.rotors[2], -1)
                     self.inverse_rotation[2] += 1
 
-    def set_rotors(self, choosen_rotors, init_config) -> list:
+    @staticmethod
+    def set_rotors(choosen_rotors, init_config) -> list:
         """
         Set rotors based on provided initial config
         :return set rotors:
@@ -371,10 +373,9 @@ class Enigma:
 
     def crypt(self) -> list:
         encrypted_message = []
-        to_encrypt = self.message.replace(" ", "")
-        for letter in to_encrypt:
+        for letter in self.message:
             encrypted_message += chr(self.rotors[2][self.rotors[1][self.rotors[0][ord(letter)]]])
-            self.rotate_rotors()
+            self.rotate_rotors(True)
         return encrypted_message
 
     def get_clear(self) -> str:
@@ -404,5 +405,7 @@ if __name__ == '__main__':
     # message7 = Vigenere(messages['message7'])
     with open('test.txt', 'r', encoding="utf8") as file:
         message = file.read()
-    enigma = Enigma(message, ch_rotors=[8, 9, 10], init_config=[0, 0, 0], encrypted=False)
+    enigma = Enigma(message, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=False)
     print(enigma.message)
+    print(enigma.rotation)
+    print(enigma.inverse_rotation)
