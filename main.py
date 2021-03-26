@@ -392,6 +392,10 @@ class Enigma:
             rotor0, rotor1, rotor2 = rotate(rotors[0], r0), rotate(rotors[1], r1), rotate(rotors[2], r2)
             encrypted_letter = chr(rotor2[rotor1[rotor0[ord(letter)]]])
             encrypted_message.append(encrypted_letter)
+            # Log
+            print(f'Rotors positions:\n0:{rotor0}\n1:{rotor1}\n2:{rotor2}\n')
+            print(f'Translation:\n{[letter]} -> {[encrypted_letter]} ({ord(letter)}>{rotor0[ord(letter)]}>{rotor1[rotor0[ord(letter)]]}>{rotor2[rotor1[rotor0[ord(letter)]]]})')
+            print(f'\n-----\n')
         return encrypted_message
 
     def get_clear(self) -> str:
@@ -426,6 +430,6 @@ if __name__ == '__main__':
     print(f'\n{enigma.message}')
 
     with open("test2.txt", 'r', encoding='utf8') as file:
-        messagetodecrypt = file.read()
-    enigma2 = Enigma(messagetodecrypt, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=True)
-    print(f'\n----\n\n{[letter for letter in enigma2.message]}')
+        messageToDecrypt = file.read()
+    enigma2 = Enigma(messageToDecrypt, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=True)
+    print(f'\n----\n\n{[(letter,ord(letter)) for letter in enigma2.message]}')
