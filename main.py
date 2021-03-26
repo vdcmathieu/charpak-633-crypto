@@ -322,7 +322,9 @@ class Enigma:
         self.rotors = self.set_rotors(ch_rotors, init_config)
         self.initial_rotors = self.rotors
         self.clear_message = self.get_clear()
-        self.encryption_dic = {"": ""}
+
+    def get_rotors(self):
+        return self.rotors
 
     def get_inverse(self) -> list:
         """
@@ -371,11 +373,25 @@ class Enigma:
             self.rotate_rotors()
         return unencrypted_message
 
+    def oldCrypt(self) -> list:
+        encrypted_message = []
+        print(f'Rotors\n{self.rotors[0]}\n{self.rotors[1]}\n{self.rotors[2]}\n')
+        for letter in self.message:
+            encrypted_letter = chr(self.get_rotors()[2][self.get_rotors()[1][self.get_rotors()[0][ord(letter)]]])
+            encrypted_message += encrypted_letter
+            self.rotate_rotors()
+            print(f'{[letter]} -> {[encrypted_letter]} ({ord(letter)}>{self.rotors[0][ord(letter)]}>{self.rotors[1][self.rotors[0][ord(letter)]]}>{self.rotors[2][self.rotors[1][self.rotors[0][ord(letter)]]]}) \n')
+            print(f'Rotors\n{self.rotors[0]}\n{self.rotors[1]}\n{self.rotors[2]}\n')
+        return encrypted_message
+
     def crypt(self) -> list:
         encrypted_message = []
-        for letter in self.message:
-            encrypted_message += chr(self.rotors[2][self.rotors[1][self.rotors[0][ord(letter)]]])
-            self.rotate_rotors(True)
+        for index, letter in enumerate(self.message):
+            rotors = self.get_rotors()
+            r0, r1, r2 = index, index // 256, (index // 256) // 256
+            rotor0, rotor1, rotor2 = rotate(rotors[0], r0), rotate(rotors[1], r1), rotate(rotors[2], r2)
+            encrypted_letter = chr(rotor2[rotor1[rotor0[ord(letter)]]])
+            encrypted_message.append(encrypted_letter)
         return encrypted_message
 
     def get_clear(self) -> str:
@@ -395,7 +411,7 @@ class Enigma:
 Main
 """
 if __name__ == '__main__':
-    # messages = import_messages()  # get messages
+    messages = import_messages()  # get messages
     # message1 = Scytale(messages["message1"], 3)
     # message2 = Shift(messages['message2'])
     # message3 = Shift(messages['message3'])
@@ -403,9 +419,13 @@ if __name__ == '__main__':
     # message5 = Vigenere(messages['message5'])
     # message6 = Vigenere(messages["message6"])
     # message7 = Vigenere(messages['message7'])
+    # print(message7.clear_message)
     with open('test.txt', 'r', encoding="utf8") as file:
         message = file.read()
-    enigma = Enigma(message, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=False)
-    print(enigma.message)
-    print(enigma.rotation)
-    print(enigma.inverse_rotation)
+    enigma = Enigma(message[:10], ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=False)
+    print(f'\n{enigma.message}')
+
+    with open("test2.txt", 'r', encoding='utf8') as file:
+        messagetodecrypt = file.read()
+    enigma2 = Enigma(messagetodecrypt, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=True)
+    print(f'\n----\n\n{[letter for letter in enigma2.message]}')
