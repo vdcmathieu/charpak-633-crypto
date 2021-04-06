@@ -12,10 +12,13 @@ Library import
 """
 
 import rotors as rt
+import os
 
 """
 Basic functions
 """
+
+clear = lambda: os.system('cls')
 
 
 def import_messages() -> dict:
@@ -60,7 +63,7 @@ def rotate(array: list, n: int = 1) -> list:
     :param n:
     :return rotated list:
     """
-    return array[-n:] + array[:-n]
+    return array[n:] + array[:n]
 
 
 """
@@ -303,6 +306,7 @@ class Vigenere:
 
 
 class Enigma:
+    message: str
 
     def __init__(self, txt: str, ch_rotors: list = None, init_config: list = None, encrypted: bool = True):
         """
@@ -367,10 +371,19 @@ class Enigma:
         return [rotate(li, init_config[index]) for index, li in enumerate(rt.get_rotors(choosen_rotors))]
 
     def decrypt(self) -> str:
-        unencrypted_message = ""
-        for letter in self.message:
-            unencrypted_message += chr(self.rotors[0].index(self.rotors[1].index(self.rotors[2].index(ord(letter)))))
-            self.rotate_rotors()
+        unencrypted_message = []
+        for index, letter in enumerate(self.message):
+            rotors = self.get_rotors()
+            r0, r1, r2 = index % 256, index // 256 % 256, (index // 256) // 256 % 256
+            rotor0, rotor1, rotor2 = rotate(rotors[0], r0), rotate(rotors[1], r1), rotate(rotors[2], r2)
+            unencrypted_letter = chr(
+                rotor0.index((r0 + rotor1.index((r1 + rotor2.index((ord(letter) + r2) % 256)) % 256)) % 256))
+            unencrypted_message.append(unencrypted_letter)
+            # Log
+            # print(f'Rotors positions:\n0:{rotor0}\n1:{rotor1}\n2:{rotor2}\n')
+            # print(f'Rotors Rotation:\n{[r0,r1,r2]}')
+            # print(f'Translation:\n{[letter]} -> {[unencrypted_letter]} ({ord(letter)}>{rotor2.index(ord(letter))}>{rotor1.index(rotor2.index(ord(letter)))}>{rotor0.index(rotor1.index(rotor2.index(ord(letter))))})')
+            # print(f'\n-----\n')
         return unencrypted_message
 
     def oldCrypt(self) -> list:
@@ -380,7 +393,8 @@ class Enigma:
             encrypted_letter = chr(self.get_rotors()[2][self.get_rotors()[1][self.get_rotors()[0][ord(letter)]]])
             encrypted_message += encrypted_letter
             self.rotate_rotors()
-            print(f'{[letter]} -> {[encrypted_letter]} ({ord(letter)}>{self.rotors[0][ord(letter)]}>{self.rotors[1][self.rotors[0][ord(letter)]]}>{self.rotors[2][self.rotors[1][self.rotors[0][ord(letter)]]]}) \n')
+            print(
+                f'{[letter]} -> {[encrypted_letter]} ({ord(letter)}>{self.rotors[0][ord(letter)]}>{self.rotors[1][self.rotors[0][ord(letter)]]}>{self.rotors[2][self.rotors[1][self.rotors[0][ord(letter)]]]}) \n')
             print(f'Rotors\n{self.rotors[0]}\n{self.rotors[1]}\n{self.rotors[2]}\n')
         return encrypted_message
 
@@ -388,14 +402,15 @@ class Enigma:
         encrypted_message = []
         for index, letter in enumerate(self.message):
             rotors = self.get_rotors()
-            r0, r1, r2 = index, index // 256, (index // 256) // 256
+            r0, r1, r2 = index % 256, index // 256 % 256, (index // 256) // 256 % 256
             rotor0, rotor1, rotor2 = rotate(rotors[0], r0), rotate(rotors[1], r1), rotate(rotors[2], r2)
-            encrypted_letter = chr(rotor2[rotor1[rotor0[ord(letter)]]])
+            encrypted_letter = chr(rotor2[rotor1[rotor0[ord(letter)] - r0] - r1] - r2)
             encrypted_message.append(encrypted_letter)
             # Log
-            print(f'Rotors positions:\n0:{rotor0}\n1:{rotor1}\n2:{rotor2}\n')
-            print(f'Translation:\n{[letter]} -> {[encrypted_letter]} ({ord(letter)}>{rotor0[ord(letter)]}>{rotor1[rotor0[ord(letter)]]}>{rotor2[rotor1[rotor0[ord(letter)]]]})')
-            print(f'\n-----\n')
+            # print(f'Rotors positions:\n0:{rotor0}\n1:{rotor1}\n2:{rotor2}\n')
+            # print(f'Rotors Rotation:\n{[r0,r1,r2]}')
+            # print(f'Translation:\n{[letter]} -> {[encrypted_letter]} ({ord(letter)}>{rotor0[ord(letter)]-r0}>{rotor1[rotor0[ord(letter)]-r0]-r1}>{rotor2[rotor1[rotor0[ord(letter)]-r0]-r1]-r2})')
+            # print(f'\n-----\n')
         return encrypted_message
 
     def get_clear(self) -> str:
@@ -411,6 +426,18 @@ class Enigma:
             return initial_message
 
 
+def brut_test():
+    combi = []
+    for i in range(10):
+        for j in range(10):
+            for k in range(10):
+                for f in range(10):
+                    for n in range(10):
+                        for o in range(10):
+                            combi.append(([i, j, k], [f, n, o]))
+    return combi
+
+
 """
 Main
 """
@@ -424,12 +451,20 @@ if __name__ == '__main__':
     # message6 = Vigenere(messages["message6"])
     # message7 = Vigenere(messages['message7'])
     # print(message7.clear_message)
-    with open('test.txt', 'r', encoding="utf8") as file:
-        message = file.read()
-    enigma = Enigma(message[:10], ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=False)
-    print(f'\n{enigma.message}')
-
-    with open("test2.txt", 'r', encoding='utf8') as file:
-        messageToDecrypt = file.read()
-    enigma2 = Enigma(messageToDecrypt, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=True)
-    print(f'\n----\n\n{[(letter,ord(letter)) for letter in enigma2.message]}')
+    # with open('test.txt', 'r', encoding="utf8") as file:
+    #     message = file.read()
+    # enigma = Enigma(message, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=False)
+    # print(f'\n{enigma.message}')
+    #
+    # with open("test2.txt", 'r', encoding='utf8') as file:
+    #     messageToDecrypt = file.read()
+    # enigma2 = Enigma(messageToDecrypt, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=True)
+    # print(enigma2.clear_message)
+    all_combi = brut_test()
+    all_combi_size = len(all_combi)
+    for index, combi in enumerate(all_combi):
+        message8 = Enigma(messages['message8'], ch_rotors=combi[0], init_config=combi[1], encrypted=True)
+        print(f'Combinaison {index} / {all_combi_size} ({index / all_combi_size * 100}%)')
+        if message8.clear_message[-4:] == ['J', 'o', 'ë', 'l']:
+            print(f'Eureka !\n Combi : {combi}')
+        clear()
