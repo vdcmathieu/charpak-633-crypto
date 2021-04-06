@@ -13,6 +13,9 @@ Library import
 
 import rotors as rt
 import os
+from tqdm import tqdm
+
+# from multiprocessing.pool import ThreadPool
 
 """
 Basic functions
@@ -31,6 +34,9 @@ def import_messages() -> dict:
         with open('messages/message{0}.txt'.format(i), 'r', encoding="utf8") as file:
             msg["message{0}".format(i)] = file.read()
     return msg
+
+
+messages = import_messages()
 
 
 def frequency(txt: str) -> dict:
@@ -330,14 +336,14 @@ class Enigma:
     def get_rotors(self):
         return self.rotors
 
-    def get_inverse(self) -> list:
+    def get_inverse(self) -> list:  # Obsolete
         """
         Get rotors inverse to decrypt
         :return rotors inverse to decrypt:
         """
         return [rotor[::-1] for rotor in self.rotors]
 
-    def rotate_rotors(self, inverse: bool = False):
+    def rotate_rotors(self, inverse: bool = False):  # Obsolete
         """
         Rotate rotors
         :param inverse:
@@ -386,7 +392,7 @@ class Enigma:
             # print(f'\n-----\n')
         return unencrypted_message
 
-    def oldCrypt(self) -> list:
+    def oldCrypt(self) -> list:  # Obsolete
         encrypted_message = []
         print(f'Rotors\n{self.rotors[0]}\n{self.rotors[1]}\n{self.rotors[2]}\n')
         for letter in self.message:
@@ -438,11 +444,17 @@ def brut_test():
     return combi
 
 
+def calculus(truc):  # For multithreading purpose, not functional yet
+    enigm = Enigma(messages['message8'], ch_rotors=truc[0], init_config=truc[1], encrypted=True)
+    print(f'Testing for {truc}')
+    if enigm.clear_message[-4:] == ['J', 'o', 'ë', 'l']:
+        print(f'Eureka !\n Combi : {truc}')
+
+
 """
 Main
 """
 if __name__ == '__main__':
-    messages = import_messages()  # get messages
     # message1 = Scytale(messages["message1"], 3)
     # message2 = Shift(messages['message2'])
     # message3 = Shift(messages['message3'])
@@ -462,9 +474,9 @@ if __name__ == '__main__':
     # print(enigma2.clear_message)
     all_combi = brut_test()
     all_combi_size = len(all_combi)
-    for index, combi in enumerate(all_combi):
+    for combi in tqdm(all_combi, desc="Advancement"):
         message8 = Enigma(messages['message8'], ch_rotors=combi[0], init_config=combi[1], encrypted=True)
-        print(f'Combinaison {index} / {all_combi_size} ({index / all_combi_size * 100}%)')
         if message8.clear_message[-4:] == ['J', 'o', 'ë', 'l']:
             print(f'Eureka !\n Combi : {combi}')
-        clear()
+    # pool = ThreadPool(40)
+    # results = pool.map(calculus, all_combi)
