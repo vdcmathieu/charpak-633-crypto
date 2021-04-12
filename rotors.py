@@ -3,7 +3,7 @@ Give the rotors variables for enigma
 """
 
 
-def get_rotors(rotors_list=None) -> list:
+def get_rotors(rotors_list=None, getsAll=False) -> list:
     """
     Get rotors given for enigma
     :rtype: objectobjecturn rotors:
@@ -100,6 +100,8 @@ def get_rotors(rotors_list=None) -> list:
          229, 75, 55, 154, 82, 150, 160, 198, 255, 1, 95, 118, 206, 120, 242, 116, 200, 110, 103, 22, 111, 178, 171, 5,
          245, 139, 18, 253, 247, 31, 108, 208, 127, 8, 144, 239, 73, 219]
     ]
+    if getsAll:
+        return rotors_data
     return [rotors_data[i] for i in rotors_list]
 
 

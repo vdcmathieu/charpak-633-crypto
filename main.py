@@ -14,6 +14,9 @@ Library import
 import rotors as rt
 import os
 from tqdm import tqdm
+from tqdm import trange
+from itertools import product
+from itertools import permutations
 
 # from multiprocessing.pool import ThreadPool
 
@@ -432,16 +435,35 @@ class Enigma:
             return initial_message
 
 
-def brut_test():
-    combi = []
-    for i in range(10):
-        for j in range(10):
-            for k in range(10):
-                for f in range(10):
-                    for n in range(10):
-                        for o in range(10):
-                            combi.append(([i, j, k], [f, n, o]))
+def get_combi(part_i):
+    combi1 = list(permutations(range(8), 3))
+    combi2 = list(permutations(range(256), 3))
+    if 1000*(part_i+1) > len(combi2):
+        A = [combi1, combi2[1000 * part_i: len(combi2)]]
+    else:
+        A = [combi1, combi2[1000*part_i:1000*(part_i+1)]]
+    combi = list(product(*A))
     return combi
+
+
+def enigma_force(message):
+    last4char = message[-4:]
+    for part_i in trange(16778): # stoped at 1924 still not conclusion
+        combis = get_combi(part_i=part_i)
+        rotors_data = rt.get_rotors(getsAll=True)
+        for combination in tqdm(combis):
+            unencrypted_message = []
+            rotors = [rotors_data[i] for i in combination[0]]
+            for index, letter in enumerate(last4char):
+                index += len(message)-4
+                r0, r1, r2 = (index + combination[1][0]) % 256, (index + combination[1][1]) // 256 % 256, (
+                        (index + combination[1][2]) // 256) // 256 % 256
+                rotor0, rotor1, rotor2 = rotate(rotors[0], r0), rotate(rotors[1], r1), rotate(rotors[2], r2)
+                unencrypted_letter = chr(
+                    rotor0.index((r0 + rotor1.index((r1 + rotor2.index((ord(letter) + r2) % 256)) % 256)) % 256))
+                unencrypted_message.append(unencrypted_letter)
+            if unencrypted_message == ['J', 'o', 'e', 'l']:
+                return combination
 
 
 def calculus(truc):  # For multithreading purpose, not functional yet
@@ -456,6 +478,7 @@ Main
 """
 if __name__ == '__main__':
     # message1 = Scytale(messages["message1"], 3)
+    # print(message1.clear_message)
     # message2 = Shift(messages['message2'])
     # message3 = Shift(messages['message3'])
     # message4 = Shift(messages['message4'], nb_m_shift=2, multiple_shift=True)
@@ -472,11 +495,12 @@ if __name__ == '__main__':
     #     messageToDecrypt = file.read()
     # enigma2 = Enigma(messageToDecrypt, ch_rotors=[0, 1, 2], init_config=[0, 0, 0], encrypted=True)
     # print(enigma2.clear_message)
-    all_combi = brut_test()
-    all_combi_size = len(all_combi)
-    for combi in tqdm(all_combi, desc="Advancement"):
-        message8 = Enigma(messages['message8'], ch_rotors=combi[0], init_config=combi[1], encrypted=True)
-        if message8.clear_message[-4:] == ['J', 'o', 'ë', 'l']:
-            print(f'Eureka !\n Combi : {combi}')
+    # all_combi = brut_test()
+    # all_combi_size = len(all_combi)
+    # for combi in tqdm(all_combi, desc="Advancement"):
+    #     message8 = Enigma(messages['message8'], ch_rotors=combi[0], init_config=combi[1], encrypted=True)
+    #     if message8.clear_message[-4:] == ['J', 'o', 'ë', 'l']:
+    #         print(f'Eureka !\n Combi : {combi}')
+    print(enigma_force(messages["message8"]))
     # pool = ThreadPool(40)
     # results = pool.map(calculus, all_combi)
